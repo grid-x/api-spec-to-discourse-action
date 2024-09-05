@@ -48,7 +48,7 @@ export async function run(): Promise<void> {
 
       const payload = {
         post: {
-          raw: postBody(`https://${discourseUrl}}/${specPath}`, commit),
+          raw: postBody(`https://${discourseUrl}/${specPath}`, commit),
           edit_reason: `Uploaded spec at ${commit}`
         }
       }
