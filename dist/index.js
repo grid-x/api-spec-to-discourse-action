@@ -26474,10 +26474,10 @@ async function run() {
     try {
         const discourseUrl = core.getInput('discourse_url');
         const discoursePostId = core.getInput('discourse_post_id');
-        const commit = process.env.GITHUB_SHA ?? "";
+        const commit = process.env.GITHUB_SHA ?? '';
         const discourseHeaders = {
-            "Api-Key": core.getInput('discourse_api_key'),
-            "Api-Username": core.getInput('discourse_user')
+            'Api-Key': core.getInput('discourse_api_key'),
+            'Api-Username': core.getInput('discourse_user')
         };
         const specFile = core.getInput('spec_file');
         const uploadUrl = `https://${discourseUrl}/uploads.json`;
@@ -26485,30 +26485,34 @@ async function run() {
         const upload = async (specPath) => {
             // ref: https://docs.discourse.org/#tag/Uploads/operation/createUpload
             const payload = new form_data_1.default();
-            payload.append("synchronous", "true");
-            payload.append("type", "composer");
-            payload.append("file", (0, fs_1.createReadStream)(specPath));
+            payload.append('synchronous', 'true');
+            payload.append('type', 'composer');
+            payload.append('file', (0, fs_1.createReadStream)(specPath));
             return fetch(uploadUrl, {
-                method: "POST",
+                method: 'POST',
+                // @ts-expect-error https://github.com/node-fetch/node-fetch/issues/1769
+                duplex: 'half',
                 headers: {
                     ...payload.getHeaders(),
                     ...discourseHeaders
                 },
-                body: stream(payload),
-            }).then(res => { res.text; });
+                body: stream(payload)
+            }).then(async (res) => res.text());
         };
         const updatePost = async (specPath) => {
             // ref: https://docs.discourse.org/#tag/Posts/operation/updatePost
             const payload = {
-                "post": {
-                    "raw": postBody(`https://${discourseUrl}}/${specPath}`, commit),
-                    "edit_reason": `Uploaded spec at ${commit}`
+                post: {
+                    raw: postBody(`https://${discourseUrl}}/${specPath}`, commit),
+                    edit_reason: `Uploaded spec at ${commit}`
                 }
             };
             return fetch(postUrl, {
-                method: "PUT",
+                method: 'PUT',
+                // @ts-expect-error https://github.com/node-fetch/node-fetch/issues/1769
+                duplex: 'half',
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                     ...discourseHeaders
                 },
                 body: JSON.stringify(payload)
@@ -26519,9 +26523,10 @@ async function run() {
         // Log the current timestamp, wait, then log the new timestamp
         core.debug(new Date().toTimeString());
         await upload(specFile)
-            .then(specPath => 
+            .then(async (specPath) => 
         // we can coerce string | vpid into string as void happens only with client side aborted requests
-        updatePost(specPath)).then(console.log);
+        updatePost(specPath))
+            .then(console.log);
         core.debug(new Date().toTimeString());
         // Set outputs for other workflow steps to use
         core.setOutput('time', new Date().toTimeString());

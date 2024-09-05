@@ -1,5 +1,7 @@
 name: 'OpenAPI Discourse Upload Action'
-description: 'Uploads an OpenAPI specification to a Discourse topic for rendering using https://github.com/wwerner/discourse-rapidoc-theme-component'
+description:
+  'Uploads an OpenAPI specification to a Discourse topic for rendering using
+  https://github.com/wwerner/discourse-rapidoc-theme-component'
 author: 'wwerner'
 
 branding:
@@ -15,15 +17,17 @@ inputs:
     description: 'the ID of the Discourse post to update'
     required: true
   discourse_api_key:
-    description: 'your discourse API key. It needs `posts - edit` and `uploads - create` permissions'
+    description:
+      'your discourse API key. It needs `posts - edit` and `uploads - create`
+      permissions'
     required: true
   discourse_api_user:
-    description: 'the discourse user on whose behalf the action should be executed'
+    description:
+      'the discourse user on whose behalf the action should be executed'
     required: true
   spec_file:
     description: 'the OAS file to upload'
     required: true
-
 
 runs:
   using: node20
