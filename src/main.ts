@@ -38,8 +38,9 @@ export async function run(): Promise<void> {
         },
         body: stream(payload)
       })
-      .then(res => res.json())
-      .then(async body => body.short_path)
+        .then(res => res.json())
+        .then(body => { console.log(body); return body })
+        .then(async body => body.short_path)
     }
 
     const updatePost = async (specPath: string): Promise<void> => {
