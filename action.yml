@@ -21,7 +21,7 @@ inputs:
       'your discourse API key. It needs `posts - edit` and `uploads - create`
       permissions'
     required: true
-  discourse_api_user:
+  discourse_user:
     description:
       'the discourse user on whose behalf the action should be executed'
     required: true
