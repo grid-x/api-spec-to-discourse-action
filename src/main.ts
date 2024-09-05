@@ -30,6 +30,8 @@ export async function run(): Promise<void> {
 
       return fetch(uploadUrl, {
         method: "POST",
+        // @ts-expect-error https://github.com/node-fetch/node-fetch/issues/1769
+        duplex: "half",
         headers: {
           ...payload.getHeaders(),
           ...discourseHeaders
@@ -49,11 +51,13 @@ export async function run(): Promise<void> {
       }
       return fetch(postUrl, {
         method: "PUT",
+        // @ts-expect-error https://github.com/node-fetch/node-fetch/issues/1769
+        duplex: "half",
         headers: {
           "Content-Type": "application/json",
           ...discourseHeaders
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       })
 
     }
