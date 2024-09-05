@@ -23,10 +23,7 @@ inputs:
   spec_file:
     description: 'the OAS file to upload'
     required: true
-# Define your outputs here.
-outputs:
-  time:
-    description: foo
+
 
 runs:
   using: node20
