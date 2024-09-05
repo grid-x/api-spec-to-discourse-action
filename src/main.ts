@@ -40,7 +40,7 @@ export async function run(): Promise<void> {
       }).then(async res => res.text())
     }
 
-    const updatePost = async (specPath: string): Promise<Response> => {
+    const updatePost = async (specPath: string): Promise<void> => {
       // ref: https://docs.discourse.org/#tag/Posts/operation/updatePost
 
       const payload = {
@@ -56,7 +56,7 @@ export async function run(): Promise<void> {
           ...discourseHeaders
         },
         body: JSON.stringify(payload)
-      })
+      }).then(res => console.log(res))
     }
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Uploading ${specFile} to ${discoursePostId}`)
