@@ -37,7 +37,9 @@ export async function run(): Promise<void> {
           ...discourseHeaders
         },
         body: stream(payload)
-      }).then(async res => res.text())
+      })
+      .then(res => res.json())
+      .then(async body => body.short_path)
     }
 
     const updatePost = async (specPath: string): Promise<void> => {
@@ -65,7 +67,7 @@ export async function run(): Promise<void> {
     core.debug(new Date().toTimeString())
     await upload(specFile)
       .then(async specPath =>
-        // we can coerce string | vpid into string as void happens only with client side aborted requests
+        // we can coerce string | void into string as void happens only with client side aborted requests
         updatePost(specPath as string)
       )
       .then(console.log)
