@@ -100,5 +100,5 @@ const postBody = (specUrl: string, commit: string): string => `\`\`\`apidoc
 ${specUrl}
 \`\`\`
 
-*last updated*: ${Date.now()} (${commit})
+*last updated*: ${Date.now().toLocaleString()} (${commit})
 `
