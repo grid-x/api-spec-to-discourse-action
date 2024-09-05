@@ -51,8 +51,6 @@ export async function run(): Promise<void> {
       }
       return fetch(postUrl, {
         method: 'PUT',
-        // @ts-ignore https://github.com/node-fetch/node-fetch/issues/1769
-        duplex: 'half',
         headers: {
           'Content-Type': 'application/json',
           ...discourseHeaders
