@@ -1,22 +1,28 @@
 import * as core from '@actions/core'
-import { createReadStream } from 'fs'
-import FormData from 'form-data' // not using node native FormData as it does not support ReadableStreams
+import { openAsBlob, statSync, readFileSync } from 'node:fs';
+import { readFile } from "node:fs/promises";
+import { lookup } from "mime-types";
+import Axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
 
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
-export async function run(): Promise<void> {
+export async function run(
+  discourseUrl: string,
+  discoursePostId: string,
+  discourseApiKey: string,
+  discourseUser: string,
+  commit: string,
+  specFile: string
+): Promise<void> {
   try {
-    const discourseUrl: string = core.getInput('discourse_url')
-    const discoursePostId: string = core.getInput('discourse_post_id')
-    const commit: string = process.env.GITHUB_SHA ?? ''
     const discourseHeaders = {
-      'Api-Key': core.getInput('discourse_api_key'),
-      'Api-Username': core.getInput('discourse_user')
+      'Api-Key': discourseApiKey,
+      'Api-Username': discourseUser
     }
-
-    const specFile: string = core.getInput('spec_file')
 
     const uploadUrl = `https://${discourseUrl}/uploads.json`
     const postUrl = `https://${discourseUrl}/posts/${discoursePostId}.json`
@@ -24,31 +30,55 @@ export async function run(): Promise<void> {
     const upload = async (specPath: string): Promise<string | void> => {
       // ref: https://docs.discourse.org/#tag/Uploads/operation/createUpload
       const payload = new FormData()
-      payload.append('synchronous', 'true')
-      payload.append('type', 'composer')
-      payload.append('file', createReadStream(specPath))
 
-      return fetch(uploadUrl, {
-        method: 'POST',
-        // @ts-ignore https://github.com/node-fetch/node-fetch/issues/1769
-        duplex: 'half',
+      const http = Axios.create({
+        baseURL: `https://${discourseUrl}`,
         headers: {
-          ...payload.getHeaders(),
-          ...discourseHeaders
+          "Api-Key": discourseApiKey,
+          "Api-Username": discourseUser,
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: stream(payload)
-      })
-        .then(res => res.json())
-        .then(body => { console.log(body); return body })
-        .then(async body => body.short_path)
+      });
+      http.interceptors.request.use((config) => {
+        if (config.data instanceof FormData) {
+          Object.assign(config.headers, config.data.getHeaders());
+        }
+        return config;
+      });
+      const file = fs.readFileSync(specPath);
+      const form = new FormData();
+      form.append("files[]", file, {
+        filename: specPath,
+      });
+
+      return http
+        .post("/uploads.json", form, {
+          params: {
+            type: "composer",
+            synchronous: true,
+          },
+        })
+        .then(({ data }) => {
+          core.debug(JSON.stringify(data, null, 2));
+          return data.url;
+        })
+        .catch((e) => {
+          console.error(
+            "Error uploading file to Discourse",
+            JSON.stringify(e, null, 2)
+          );
+          throw e;
+        });
     }
 
-    const updatePost = async (specPath: string): Promise<void> => {
+    const updatePost = async (specUrl: string): Promise<void> => {
       // ref: https://docs.discourse.org/#tag/Posts/operation/updatePost
+      core.info(`Updating ${postUrl}`)
 
       const payload = {
         post: {
-          raw: postBody(`https://${discourseUrl}/${specPath}`, commit),
+          raw: postBody(specUrl, commit),
           edit_reason: `Uploaded spec at ${commit}`
         }
       }
@@ -59,47 +89,35 @@ export async function run(): Promise<void> {
           ...discourseHeaders
         },
         body: JSON.stringify(payload)
-      }).then(res => console.log(res))
+      })
+        .then(res => {
+          core.info("... updated")
+          core.debug(res.statusText)
+        })
+        .catch(err => { core.error(err); process.exit(1) })
     }
+
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Uploading ${specFile} to ${discoursePostId}`)
+    core.debug(`Uploading ${specFile} to post #${discoursePostId}`)
 
     // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
     await upload(specFile)
       .then(async specPath =>
         // we can coerce string | void into string as void happens only with client side aborted requests
         updatePost(specPath as string)
       )
-      .then(console.log)
-    core.debug(new Date().toTimeString())
-
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
 
-const stream = (form: FormData): ReadableStream =>
-  new ReadableStream({
-    async pull(controller) {
-      return new Promise(function (resolve) {
-        form.on('data', function (chunk) {
-          controller.enqueue(chunk)
-        })
-        form.once('end', function () {
-          resolve()
-        })
-        form.resume()
-      })
-    }
-  })
+const str2blob = (txt: string) => new Blob([txt]);
 
 const postBody = (specUrl: string, commit: string): string => `\`\`\`apidoc
 ${specUrl}
 \`\`\`
 
-*last updated*: ${Date.now().toLocaleString()} (${commit})
+*last updated*: ${new Date().toISOString()} (${commit.trim()})
 `
+
