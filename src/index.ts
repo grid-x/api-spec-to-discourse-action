@@ -4,7 +4,6 @@
 import { run } from './main'
 import * as core from '@actions/core'
 
-
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 const discourseUrl: string = core.getInput('discourse_url')
 const discoursePostId: string = core.getInput('discourse_post_id')

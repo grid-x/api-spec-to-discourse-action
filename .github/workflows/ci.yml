@@ -30,5 +30,5 @@ jobs:
           discourse_post_id: ${{secrets.DISCOURSE_POST_ID}}
           discourse_api_key: ${{secrets.DISCOURSE_API_KEY}}
           discourse_user: ${{secrets.DISCOURSE_USER}}
-          github_sha:  ${{env.GITHUB_SHA}}
+          github_sha: ${{env.GITHUB_SHA}}
           spec_file: ./petstore.yaml
