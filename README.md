@@ -4,7 +4,7 @@ We use [rapidoc](https://rapidocweb.com/) as a
 [Discourse](https://discourse.org/)
 [theme component](https://github.com/wwerner/discourse-rapidoc-theme-component)
 to render [OpenAPI specifications](https://swagger.io/specification/) in forum
-posts. This repository provides a GitHub action to upload the specification file
+posts. This repository provides a GitHub Action to upload the specification file
 and update a given topic with the newly uploaded file.
 
 ## Prerequisites / Inputs
