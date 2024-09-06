@@ -29,10 +29,10 @@ and update a given topic with the newly uploaded file.
 ## Instructions
 
 1. Create a topic that hosts your specification on your Discourse instance using
-   https://github.com/wwerner/discourse-rapidoc-theme-component
-2. Get the required parameters as described above
-3. Configure the action in your GH workflow, preferably on release
-4. Profit
+   [https://github.com/wwerner/discourse-rapidoc-theme-component](https://github.com/wwerner/discourse-rapidoc-theme-component)
+1. Get the required parameters as described above
+1. Configure the action in your GH workflow, preferably on release
+1. Profit
 
 ## Development
 
