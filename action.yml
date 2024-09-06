@@ -28,6 +28,9 @@ inputs:
   spec_file:
     description: 'the OAS file to upload'
     required: true
+  github_sha:
+    description: 'short commit hash to be put into to post for traceability'
+    required: true
 
 runs:
   using: node20
