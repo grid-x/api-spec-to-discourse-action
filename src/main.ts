@@ -29,7 +29,9 @@ export async function run(
     }
     const postUrl = `https://${discourseUrl}/posts/${discoursePostId}.json`
 
-    const upload = async (specPath: string): Promise<DiscourseUploadResult | void> => {
+    const upload = async (
+      specPath: string
+    ): Promise<DiscourseUploadResult | void> => {
       // ref: https://docs.discourse.org/#tag/Uploads/operation/createUpload
       const http = Axios.create({
         baseURL: `https://${discourseUrl}`,
@@ -65,7 +67,7 @@ export async function run(
             url: data.url,
             short_url: data.short_url,
             short_path: data.short_path,
-            original_filename: data.original_filename,
+            original_filename: data.original_filename
           }
         })
         .catch(e => {
@@ -77,7 +79,9 @@ export async function run(
         })
     }
 
-    const updatePost = async (uploadResult: DiscourseUploadResult): Promise<void> => {
+    const updatePost = async (
+      uploadResult: DiscourseUploadResult
+    ): Promise<void> => {
       // ref: https://docs.discourse.org/#tag/Posts/operation/updatePost
       core.info(`Updating ${postUrl}`)
 
@@ -105,7 +109,10 @@ export async function run(
         })
     }
 
-    const postBody = (uploadResult: DiscourseUploadResult, commit: string): string => `API Documentation/Specification \`${uploadResult.original_filename}\`
+    const postBody = (
+      uploadResult: DiscourseUploadResult,
+      commit: string
+    ): string => `API Documentation/Specification \`${uploadResult.original_filename}\`
     
 \`\`\`apidoc
 https://${discourseUrl}/${uploadResult.short_path}
@@ -120,14 +127,12 @@ https://${discourseUrl}/${uploadResult.short_path}
     core.debug(`Uploading ${specFile} to post #${discoursePostId}`)
 
     // Log the current timestamp, wait, then log the new timestamp
-    await upload(specFile)
-      .then(async uploadResult => {
-        if (!uploadResult) {
-          throw new Error("Upload failed. Aborting post update.")
-        }
-        return updatePost(uploadResult)
+    await upload(specFile).then(async uploadResult => {
+      if (!uploadResult) {
+        throw new Error('Upload failed. Aborting post update.')
       }
-      )
+      return updatePost(uploadResult)
+    })
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
