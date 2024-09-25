@@ -3,6 +3,13 @@ import Axios from 'axios'
 import FormData from 'form-data'
 import fs from 'fs'
 
+type DiscourseUploadResult = {
+  url: string
+  short_url: string
+  short_path: string
+  original_filename: string
+}
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -22,7 +29,7 @@ export async function run(
     }
     const postUrl = `https://${discourseUrl}/posts/${discoursePostId}.json`
 
-    const upload = async (specPath: string): Promise<string | void> => {
+    const upload = async (specPath: string): Promise<DiscourseUploadResult | void> => {
       // ref: https://docs.discourse.org/#tag/Uploads/operation/createUpload
       const http = Axios.create({
         baseURL: `https://${discourseUrl}`,
@@ -54,7 +61,12 @@ export async function run(
         })
         .then(({ data }) => {
           core.debug(JSON.stringify(data, null, 2))
-          return data.url
+          return {
+            url: data.url,
+            short_url: data.short_url,
+            short_path: data.short_path,
+            original_filename: data.original_filename,
+          }
         })
         .catch(e => {
           console.error(
@@ -65,13 +77,13 @@ export async function run(
         })
     }
 
-    const updatePost = async (specUrl: string): Promise<void> => {
+    const updatePost = async (uploadResult: DiscourseUploadResult): Promise<void> => {
       // ref: https://docs.discourse.org/#tag/Posts/operation/updatePost
       core.info(`Updating ${postUrl}`)
 
       const payload = {
         post: {
-          raw: postBody(specUrl, commit),
+          raw: postBody(uploadResult, commit),
           edit_reason: `Uploaded spec at ${commit}`
         }
       }
@@ -93,23 +105,29 @@ export async function run(
         })
     }
 
+    const postBody = (uploadResult: DiscourseUploadResult, commit: string): string => `\`\`\`apidoc
+https://${discourseUrl}/${uploadResult.short_path}
+\`\`\`
+
+[${uploadResult.original_filename}|attachment](${uploadResult.short_url})
+
+*last updated*: ${new Date().toISOString()} (sha ${commit.trim()})
+`
+
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Uploading ${specFile} to post #${discoursePostId}`)
 
     // Log the current timestamp, wait, then log the new timestamp
-    await upload(specFile).then(async specPath =>
-      // we can coerce string | void into string as void happens only with client side aborted requests
-      updatePost(specPath as string)
-    )
+    await upload(specFile)
+      .then(async uploadResult => {
+        if (!uploadResult) {
+          throw new Error("Upload failed. Aborting post update.")
+        }
+        return updatePost(uploadResult)
+      }
+      )
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
-
-const postBody = (specUrl: string, commit: string): string => `\`\`\`apidoc
-${specUrl}
-\`\`\`
-
-*last updated*: ${new Date().toISOString()} (sha ${commit.trim()})
-`
