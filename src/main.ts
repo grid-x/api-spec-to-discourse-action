@@ -105,7 +105,9 @@ export async function run(
         })
     }
 
-    const postBody = (uploadResult: DiscourseUploadResult, commit: string): string => `\`\`\`apidoc
+    const postBody = (uploadResult: DiscourseUploadResult, commit: string): string => `API Documentation/Specification \`${uploadResult.original_filename}\`
+    
+\`\`\`apidoc
 https://${discourseUrl}/${uploadResult.short_path}
 \`\`\`
 
