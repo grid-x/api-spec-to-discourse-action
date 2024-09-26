@@ -28558,19 +28558,24 @@ async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser
             })
                 .then(({ data }) => {
                 core.debug(JSON.stringify(data, null, 2));
-                return data.url;
+                return {
+                    url: data.url,
+                    short_url: data.short_url,
+                    short_path: data.short_path,
+                    original_filename: data.original_filename
+                };
             })
                 .catch(e => {
                 console.error('Error uploading file to Discourse', JSON.stringify(e, null, 2));
                 throw e;
             });
         };
-        const updatePost = async (specUrl) => {
+        const updatePost = async (uploadResult) => {
             // ref: https://docs.discourse.org/#tag/Posts/operation/updatePost
             core.info(`Updating ${postUrl}`);
             const payload = {
                 post: {
-                    raw: postBody(specUrl, commit),
+                    raw: postBody(uploadResult, commit),
                     edit_reason: `Uploaded spec at ${commit}`
                 }
             };
@@ -28591,12 +28596,25 @@ async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser
                 process.exit(1);
             });
         };
+        const postBody = (uploadResult, commit) => `API Documentation/Specification \`${uploadResult.original_filename}\`
+    
+\`\`\`apidoc
+https://${discourseUrl}/${uploadResult.short_path}
+\`\`\`
+
+[${uploadResult.original_filename}|attachment](${uploadResult.short_url})
+
+*last updated*: ${new Date().toISOString()} (sha ${commit.trim()})
+`;
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Uploading ${specFile} to post #${discoursePostId}`);
         // Log the current timestamp, wait, then log the new timestamp
-        await upload(specFile).then(async (specPath) => 
-        // we can coerce string | void into string as void happens only with client side aborted requests
-        updatePost(specPath));
+        await upload(specFile).then(async (uploadResult) => {
+            if (!uploadResult) {
+                throw new Error('Upload failed. Aborting post update.');
+            }
+            return updatePost(uploadResult);
+        });
     }
     catch (error) {
         // Fail the workflow run if an error occurs
@@ -28604,12 +28622,6 @@ async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser
             core.setFailed(error.message);
     }
 }
-const postBody = (specUrl, commit) => `\`\`\`apidoc
-${specUrl}
-\`\`\`
-
-*last updated*: ${new Date().toISOString()} (sha ${commit.trim()})
-`;
 
 
 /***/ }),
