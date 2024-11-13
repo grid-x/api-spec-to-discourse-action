@@ -1,3 +1,4 @@
+# obsolete, keeping for reference only
 env:
   node: true
   es6: true
