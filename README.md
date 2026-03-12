@@ -25,6 +25,20 @@ and update a given topic with the newly uploaded file.
   `git rev-parse --short HEAD`
 - `spec_file` - the specification file to be uploaded, relative to the
   repositories root
+- `body_template` _(optional)_ - custom post body template. Supports
+  placeholders: `{ORIGINAL_FILENAME}`, `{DISCOURSE_URL}`, `{UPLOAD_PATH}`,
+  `{UPLOAD_URL}`, `{DATE}`, `{COMMIT}`. Defaults to:
+  ````
+  API Documentation/Specification `{ORIGINAL_FILENAME}`
+
+  ```apidoc
+  https://{DISCOURSE_URL}/{UPLOAD_PATH}
+  ```
+
+  [{ORIGINAL_FILENAME}|attachment]({UPLOAD_URL})
+
+  *last updated*: {DATE} (sha {COMMIT})
+  ````
 
 ## Instructions
 

@@ -37367,11 +37367,35 @@ var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
 
 
 
+const DEFAULT_BODY_TEMPLATE = `API Documentation/Specification \`{ORIGINAL_FILENAME}\`
+
+\`\`\`apidoc
+https://{DISCOURSE_URL}/{UPLOAD_PATH}
+\`\`\`
+
+[{ORIGINAL_FILENAME}|attachment]({UPLOAD_URL})
+
+*last updated*: {DATE} (sha {COMMIT})
+`;
+const postBody = (discourseUrl, uploadResult, commit, bodyTemplate = DEFAULT_BODY_TEMPLATE) => {
+    const params = {
+        DISCOURSE_URL: discourseUrl,
+        UPLOAD_PATH: uploadResult.short_path,
+        UPLOAD_URL: uploadResult.short_url,
+        ORIGINAL_FILENAME: uploadResult.original_filename,
+        DATE: new Date().toISOString(),
+        COMMIT: commit.trim()
+    };
+    return Object.entries(params).reduce((body, [key, value]) => {
+        const placeholder = `{${key}}`;
+        return body.replace(new RegExp(placeholder, 'g'), value);
+    }, bodyTemplate);
+};
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
-async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser, commit, specFile) {
+async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser, commit, specFile, bodyTemplate = DEFAULT_BODY_TEMPLATE) {
     try {
         const discourseHeaders = {
             'Api-Key': discourseApiKey,
@@ -37426,7 +37450,7 @@ async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser
             core.info(`Updating ${postUrl}`);
             const payload = {
                 post: {
-                    raw: postBody(uploadResult, commit),
+                    raw: postBody(discourseUrl, uploadResult, commit, bodyTemplate),
                     edit_reason: `Uploaded spec at ${commit}`
                 }
             };
@@ -37447,16 +37471,6 @@ async function run(discourseUrl, discoursePostId, discourseApiKey, discourseUser
                 process.exit(1);
             });
         };
-        const postBody = (uploadResult, commit) => `API Documentation/Specification \`${uploadResult.original_filename}\`
-    
-\`\`\`apidoc
-https://${discourseUrl}/${uploadResult.short_path}
-\`\`\`
-
-[${uploadResult.original_filename}|attachment](${uploadResult.short_url})
-
-*last updated*: ${new Date().toISOString()} (sha ${commit.trim()})
-`;
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Uploading ${specFile} to post #${discoursePostId}`);
         // Log the current timestamp, wait, then log the new timestamp
@@ -37487,7 +37501,8 @@ const discourseApiKey = core.getInput('discourse_api_key');
 const discourseUser = core.getInput('discourse_user');
 const commit = core.getInput('github_sha');
 const specFile = core.getInput('spec_file');
-run(discourseUrl, discoursePostId, discourseApiKey, discourseUser, commit, specFile);
+const bodyTemplate = core.getInput('body_template');
+run(discourseUrl, discoursePostId, discourseApiKey, discourseUser, commit, specFile, bodyTemplate);
 
 
 //# sourceMappingURL=index.js.map
