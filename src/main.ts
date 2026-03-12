@@ -36,8 +36,10 @@ export const postBody = (
     COMMIT: commit.trim()
   }
 
-  return Object.entries(params).reduce((body, [key, value]) =>
-    body.replace(new RegExp(`{${key}}`, 'g'), value), bodyTemplate)
+  return Object.entries(params).reduce(
+    (body, [key, value]) => body.replace(new RegExp(`{${key}}`, 'g'), value),
+    bodyTemplate
+  )
 }
 
 /**
