@@ -28,6 +28,7 @@ and update a given topic with the newly uploaded file.
 - `body_template` _(optional)_ - custom post body template. Supports
   placeholders: `{ORIGINAL_FILENAME}`, `{DISCOURSE_URL}`, `{UPLOAD_PATH}`,
   `{UPLOAD_URL}`, `{DATE}`, `{COMMIT}`. Defaults to:
+
   ````
   API Documentation/Specification `{ORIGINAL_FILENAME}`
 
