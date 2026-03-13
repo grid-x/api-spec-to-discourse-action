@@ -10,6 +10,38 @@ type DiscourseUploadResult = {
   original_filename: string
 }
 
+const DEFAULT_BODY_TEMPLATE = `API Documentation/Specification \`{ORIGINAL_FILENAME}\`
+
+\`\`\`apidoc
+https://{DISCOURSE_URL}/{UPLOAD_PATH}
+\`\`\`
+
+[{ORIGINAL_FILENAME}|attachment]({UPLOAD_URL})
+
+*last updated*: {DATE} (sha {COMMIT})
+`
+
+export const postBody = (
+  discourseUrl: string,
+  uploadResult: DiscourseUploadResult,
+  commit: string,
+  bodyTemplate: string = DEFAULT_BODY_TEMPLATE
+): string => {
+  const params = {
+    DISCOURSE_URL: discourseUrl,
+    UPLOAD_PATH: uploadResult.short_path,
+    UPLOAD_URL: uploadResult.short_url,
+    ORIGINAL_FILENAME: uploadResult.original_filename,
+    DATE: new Date().toISOString(),
+    COMMIT: commit.trim()
+  }
+
+  return Object.entries(params).reduce(
+    (body, [key, value]) => body.replace(new RegExp(`{${key}}`, 'g'), value),
+    bodyTemplate
+  )
+}
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -20,7 +52,8 @@ export async function run(
   discourseApiKey: string,
   discourseUser: string,
   commit: string,
-  specFile: string
+  specFile: string,
+  bodyTemplate: string = DEFAULT_BODY_TEMPLATE
 ): Promise<void> {
   try {
     const discourseHeaders = {
@@ -87,7 +120,7 @@ export async function run(
 
       const payload = {
         post: {
-          raw: postBody(uploadResult, commit),
+          raw: postBody(discourseUrl, uploadResult, commit, bodyTemplate),
           edit_reason: `Uploaded spec at ${commit}`
         }
       }
@@ -108,20 +141,6 @@ export async function run(
           process.exit(1)
         })
     }
-
-    const postBody = (
-      uploadResult: DiscourseUploadResult,
-      commit: string
-    ): string => `API Documentation/Specification \`${uploadResult.original_filename}\`
-    
-\`\`\`apidoc
-https://${discourseUrl}/${uploadResult.short_path}
-\`\`\`
-
-[${uploadResult.original_filename}|attachment](${uploadResult.short_url})
-
-*last updated*: ${new Date().toISOString()} (sha ${commit.trim()})
-`
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Uploading ${specFile} to post #${discoursePostId}`)

@@ -12,11 +12,13 @@ const discourseUser: string = core.getInput('discourse_user')
 const commit: string = core.getInput('github_sha')
 
 const specFile: string = core.getInput('spec_file')
+const bodyTemplate: string = core.getInput('body_template')
 run(
   discourseUrl,
   discoursePostId,
   discourseApiKey,
   discourseUser,
   commit,
-  specFile
+  specFile,
+  bodyTemplate
 )

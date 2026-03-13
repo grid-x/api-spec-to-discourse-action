@@ -31,6 +31,21 @@ inputs:
   github_sha:
     description: 'short commit hash to be put into to post for traceability'
     required: true
+  body_template:
+    description: |
+      Custom post body template. Supports placeholders:
+      {ORIGINAL_FILENAME}, {DISCOURSE_URL}, {UPLOAD_PATH}, {UPLOAD_URL}, {DATE}, {COMMIT}
+    required: false
+    default: |
+      API Documentation/Specification `{ORIGINAL_FILENAME}`
+
+      ```apidoc
+      https://{DISCOURSE_URL}/{UPLOAD_PATH}
+      ```
+
+      [{ORIGINAL_FILENAME}|attachment]({UPLOAD_URL})
+
+      *last updated*: {DATE} (sha {COMMIT})
 
 runs:
   using: node20
