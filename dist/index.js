@@ -37386,10 +37386,7 @@ const postBody = (discourseUrl, uploadResult, commit, bodyTemplate = DEFAULT_BOD
         DATE: new Date().toISOString(),
         COMMIT: commit.trim()
     };
-    return Object.entries(params).reduce((body, [key, value]) => {
-        const placeholder = `{${key}}`;
-        return body.replace(new RegExp(placeholder, 'g'), value);
-    }, bodyTemplate);
+    return Object.entries(params).reduce((body, [key, value]) => body.replace(new RegExp(`{${key}}`, 'g'), value), bodyTemplate);
 };
 /**
  * The main function for the action.
